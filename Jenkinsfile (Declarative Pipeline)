@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'Maven_3.8.1'   // Preconfigured Maven in Jenkins
+        jdk 'Java_11'         // Preconfigured JDK in Jenkins
+    }
+// - Checkout Stage → Pulls Selenium test code from Git.
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/your-org/selenium-tests.git'
+            }
+        }
+// - Build Stage → Compiles the project with Maven.
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
+// - Run Tests Stage → Executes Selenium tests (JUnit/TestNG).
+
+        stage('Run Tests') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+
+        stage('Publish Results') {
+            steps {
+                junit 'target/surefire-reports/*.xml'
+            }
+        }
+    }
+// - Publish Results Stage → Displays test results in Jenkins dashboard.
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+        }
+        success {
+            echo '✅ Selenium tests passed successfully!'
+        }
+        failure {
+            echo '❌ Selenium tests failed. Check reports.'
+        }
+    }
+}
